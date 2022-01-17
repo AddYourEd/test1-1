@@ -1,0 +1,11 @@
+stages:
+  - deploy to kubernetes
+
+deploy:
+  stage: deploy to kubernetes
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: [""]
+  script:
+  - kubectl config use-context MiF36rus/neolearn-git:microk8s
+  - kubectl apply -f manifests/*.yaml
