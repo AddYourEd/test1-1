@@ -1,5 +1,17 @@
 stages:
+  - docker-build
   - deploy to kubernetes
+
+docker-build:
+  image: docker:latest
+  stage: docker-build
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.gitlab.com
+  script:
+    - docker build -t "registry.gitlab.com/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA" .
+    - docker push "registry.gitlab.com/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA"
 
 deploy:
   stage: deploy to kubernetes
@@ -7,5 +19,8 @@ deploy:
     name: bitnami/kubectl:latest
     entrypoint: [""]
   script:
-  - kubectl config use-context MiF36rus/neolearn-git:microk8s
-  - kubectl apply -f manifests/*.yaml
+  - kubectl config use-context $CONTEXT
+  - |
+    eval "cat << EOF       
+    $(cat manifests/*.yaml)
+    EOF" | kubectl apply -f -
